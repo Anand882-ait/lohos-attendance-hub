@@ -1,4 +1,3 @@
-
 export interface User {
   id: string;
   username: string;
@@ -49,6 +48,11 @@ export interface AttendanceRecord {
   reason?: string;
   markedBy: string;
   markedAt: string;
+}
+
+// New interface for students with attendance information
+export interface StudentWithAttendance extends Student {
+  attendance: Attendance | null;
 }
 
 export type AuthContextType = {

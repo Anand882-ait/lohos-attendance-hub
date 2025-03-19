@@ -5,7 +5,7 @@ import { format, addDays, subDays, startOfMonth, endOfMonth } from "date-fns";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { getStudents, getAttendance, markAttendance, downloadAttendance } from "@/lib/api";
-import { Attendance, Student } from "@/types";
+import { Attendance, Student, StudentWithAttendance } from "@/types";
 import Layout from "@/components/Layout";
 import AttendanceStatusBadge from "@/components/AttendanceStatusBadge";
 import { Button } from "@/components/ui/button";
@@ -212,7 +212,7 @@ const AttendancePage = () => {
         return {
           ...student,
           attendance: attendance || null,
-        };
+        } as StudentWithAttendance;
       });
   }, [students, attendanceData, searchTerm, filterStatus]);
   
