@@ -1,32 +1,58 @@
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { getStudentsCount, getRoomsCount, getAttendanceSummary } from "@/lib/api";
+import { 
+  getStudents, 
+  getRooms, 
+  getAttendance,
+  getStudentsCount, 
+  getRoomsCount, 
+  getAttendanceSummary 
+} from "@/lib/api";
 import { Loader2, Users, DoorClosed, CalendarCheck, BarChart3, Clock, User } from "lucide-react";
 
 const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   
-  const { data: studentsCount, isLoading: loadingStudents } = useQuery({
-    queryKey: ["studentsCount"],
-    queryFn: getStudentsCount,
+  // Fetch all students to get actual count
+  const { data: allStudents, isLoading: loadingAllStudents } = useQuery({
+    queryKey: ["allStudents"],
+    queryFn: getStudents,
   });
   
-  const { data: roomsCount, isLoading: loadingRooms } = useQuery({
-    queryKey: ["roomsCount"],
-    queryFn: getRoomsCount,
+  // Fetch all rooms to get actual count
+  const { data: allRooms, isLoading: loadingAllRooms } = useQuery({
+    queryKey: ["allRooms"],
+    queryFn: getRooms,
   });
   
-  const { data: attendanceSummary, isLoading: loadingAttendance } = useQuery({
-    queryKey: ["attendanceSummary"],
-    queryFn: getAttendanceSummary,
+  // Fetch today's attendance
+  const { data: attendanceData, isLoading: loadingAttendance } = useQuery({
+    queryKey: ["todayAttendance"],
+    queryFn: () => getAttendance(new Date().toISOString().split("T")[0]),
   });
+  
+  // Calculate attendance stats from the actual data
+  const attendanceSummary = React.useMemo(() => {
+    if (!attendanceData || !allStudents) return null;
+    
+    const presentCount = attendanceData.filter(record => record.status === "present").length;
+    const absentCount = attendanceData.filter(record => record.status === "absent").length;
+    const permissionCount = attendanceData.filter(record => record.status === "permission").length;
+    
+    return {
+      presentCount,
+      absentCount,
+      permissionCount,
+      date: new Date().toISOString(),
+    };
+  }, [attendanceData, allStudents]);
   
   const currentTime = new Date();
   const formattedTime = currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -68,13 +94,13 @@ const Dashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {loadingStudents ? (
+              {loadingAllStudents ? (
                 <div className="flex justify-center py-2 md:py-4">
                   <Loader2 className="h-5 w-5 md:h-6 md:w-6 animate-spin text-muted-foreground" />
                 </div>
               ) : (
                 <div className="flex items-baseline">
-                  <p className="text-2xl md:text-3xl font-bold">{studentsCount || 0}</p>
+                  <p className="text-2xl md:text-3xl font-bold">{allStudents?.length || 0}</p>
                   <Button
                     variant="link"
                     className="ml-auto text-xs"
@@ -96,13 +122,13 @@ const Dashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {loadingRooms ? (
+              {loadingAllRooms ? (
                 <div className="flex justify-center py-2 md:py-4">
                   <Loader2 className="h-5 w-5 md:h-6 md:w-6 animate-spin text-muted-foreground" />
                 </div>
               ) : (
                 <div className="flex items-baseline">
-                  <p className="text-2xl md:text-3xl font-bold">{roomsCount || 0}</p>
+                  <p className="text-2xl md:text-3xl font-bold">{allRooms?.length || 0}</p>
                   <Button
                     variant="link"
                     className="ml-auto text-xs"
@@ -124,7 +150,7 @@ const Dashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {loadingAttendance ? (
+              {loadingAttendance || loadingAllStudents ? (
                 <div className="flex justify-center py-2 md:py-4">
                   <Loader2 className="h-5 w-5 md:h-6 md:w-6 animate-spin text-muted-foreground" />
                 </div>
@@ -132,7 +158,7 @@ const Dashboard = () => {
                 <div className="flex items-baseline">
                   <p className="text-2xl md:text-3xl font-bold">
                     {attendanceSummary?.presentCount || 0}
-                    <span className="text-sm text-muted-foreground ml-1">/ {studentsCount || 0}</span>
+                    <span className="text-sm text-muted-foreground ml-1">/ {allStudents?.length || 0}</span>
                   </p>
                   <Button
                     variant="link"
