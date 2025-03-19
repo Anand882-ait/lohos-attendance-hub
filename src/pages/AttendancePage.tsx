@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, addDays, subDays, startOfMonth, endOfMonth } from "date-fns";
@@ -59,7 +58,7 @@ const AttendancePage = () => {
   
   // State for attendance marking dialog
   const [markingDialogOpen, setMarkingDialogOpen] = useState(false);
-  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [selectedStudent, setSelectedStudent] = useState<StudentWithAttendance | null>(null);
   const [attendanceStatus, setAttendanceStatus] = useState<"present" | "absent" | "permission">("present");
   const [permissionReason, setPermissionReason] = useState("");
   
@@ -141,17 +140,13 @@ const AttendancePage = () => {
     setSelectedDate(prevDate => addDays(prevDate, 1));
   };
   
-  const handleMarkAttendance = (student: Student) => {
+  const handleMarkAttendance = (student: StudentWithAttendance) => {
     setSelectedStudent(student);
     
     // Check if student already has attendance for this day
-    const existingAttendance = attendanceData?.find(
-      (a: Attendance) => a.studentId === student.id
-    );
-    
-    if (existingAttendance) {
-      setAttendanceStatus(existingAttendance.status);
-      setPermissionReason(existingAttendance.reason || "");
+    if (student.attendance) {
+      setAttendanceStatus(student.attendance.status);
+      setPermissionReason(student.attendance.reason || "");
     } else {
       setAttendanceStatus("present");
       setPermissionReason("");
