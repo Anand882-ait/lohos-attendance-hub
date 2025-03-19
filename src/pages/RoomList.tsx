@@ -16,6 +16,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
@@ -221,6 +222,9 @@ const RoomList = () => {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{currentRoom ? "Edit Room" : "Add New Room"}</DialogTitle>
+            <DialogDescription>
+              Room numbers can be like 101, F1, G1, etc.
+            </DialogDescription>
           </DialogHeader>
           
           <form onSubmit={handleSubmit} className="space-y-4 py-4">
@@ -230,7 +234,7 @@ const RoomList = () => {
                 id="roomNumber"
                 value={roomNumber}
                 onChange={(e) => setRoomNumber(e.target.value)}
-                placeholder="e.g. 101"
+                placeholder="e.g. 101, F1, G1"
                 required
               />
             </div>
@@ -241,7 +245,7 @@ const RoomList = () => {
                 id="floor"
                 value={floor}
                 onChange={(e) => setFloor(e.target.value)}
-                placeholder="e.g. 1"
+                placeholder="e.g. 1, Ground, First"
               />
             </div>
             
