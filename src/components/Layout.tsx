@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,13 @@ const Layout: React.FC<LayoutProps> = ({ children, title }) => {
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
 
+  // Auto-close sidebar on mobile when navigating
+  useEffect(() => {
+    if (isMobile) {
+      setSidebarOpen(false);
+    }
+  }, [location.pathname, isMobile]);
+
   if (!user) return <>{children}</>;
 
   const navItems = [
@@ -41,12 +48,20 @@ const Layout: React.FC<LayoutProps> = ({ children, title }) => {
   };
 
   return (
-    <div className="min-h-screen flex bg-background">
+    <div className="min-h-screen flex flex-col md:flex-row bg-background">
+      {/* Mobile overlay */}
+      {sidebarOpen && isMobile && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+      
       {/* Sidebar */}
       <aside 
         className={`${
-          sidebarOpen ? "w-64" : "w-0 md:w-16"
-        } h-screen sticky top-0 bg-white border-r border-border flex flex-col transition-all duration-300 ease-in-out overflow-hidden`}
+          sidebarOpen ? "w-64 translate-x-0" : "w-0 -translate-x-full md:translate-x-0 md:w-16"
+        } h-screen md:sticky fixed top-0 left-0 bottom-0 z-50 bg-white border-r border-border flex flex-col transition-all duration-300 ease-in-out overflow-hidden`}
       >
         {/* Logo */}
         <div className="p-4 md:p-6">
@@ -59,7 +74,10 @@ const Layout: React.FC<LayoutProps> = ({ children, title }) => {
           {navItems.map((item) => (
             <button
               key={item.name}
-              onClick={() => navigate(item.path)}
+              onClick={() => {
+                navigate(item.path);
+                if (isMobile) setSidebarOpen(false);
+              }}
               className={`w-full flex items-center space-x-3 px-4 py-3 rounded-md text-sm font-medium transition-colors
                 ${location.pathname.includes(item.path) 
                   ? "bg-primary/10 text-primary" 
@@ -106,10 +124,10 @@ const Layout: React.FC<LayoutProps> = ({ children, title }) => {
             >
               {sidebarOpen ? <X size={18} /> : <Menu size={18} />}
             </Button>
-            <h1 className="text-xl font-medium">{title || "LOHOS Attendance"}</h1>
+            <h1 className="text-xl font-medium truncate">{title || "LOHOS Attendance"}</h1>
           </div>
           <div className="flex space-x-2">
-            {/* Additional header elements can go here */}
+            {/* Additional header elements */}
           </div>
         </header>
 

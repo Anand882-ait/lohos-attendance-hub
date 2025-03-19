@@ -48,33 +48,25 @@ const AttendancePage = () => {
   const queryClient = useQueryClient();
   const isAdmin = user?.role === "admin";
   
-  // State for selected date and date navigation
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [calendarOpen, setCalendarOpen] = useState(false);
   
-  // State for filter and search
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   
-  // State for attendance marking dialog
   const [markingDialogOpen, setMarkingDialogOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<StudentWithAttendance | null>(null);
   const [attendanceStatus, setAttendanceStatus] = useState<"present" | "absent" | "permission">("present");
   const [permissionReason, setPermissionReason] = useState("");
   
-  // Format the selected date as ISO string (YYYY-MM-DD)
   const formattedDate = format(selectedDate, "yyyy-MM-dd");
-  
-  // Get the current month for download
   const currentMonth = format(selectedDate, "yyyy-MM");
   
-  // Fetch students data
   const { data: students, isLoading: isStudentsLoading } = useQuery({
     queryKey: ["students"],
     queryFn: getStudents,
   });
   
-  // Fetch attendance for the selected date
   const {
     data: attendanceData,
     isLoading: isAttendanceLoading,
@@ -84,7 +76,6 @@ const AttendancePage = () => {
     queryFn: () => getAttendance(formattedDate),
   });
   
-  // Mark attendance mutation
   const markAttendanceMutation = useMutation({
     mutationFn: markAttendance,
     onSuccess: () => {
@@ -98,11 +89,9 @@ const AttendancePage = () => {
     },
   });
   
-  // Download attendance mutation
   const downloadAttendanceMutation = useMutation({
     mutationFn: () => downloadAttendance(currentMonth),
     onSuccess: (blob) => {
-      // Create a download link and trigger download
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -110,7 +99,6 @@ const AttendancePage = () => {
       document.body.appendChild(a);
       a.click();
       
-      // Cleanup
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
       
@@ -121,7 +109,6 @@ const AttendancePage = () => {
     },
   });
   
-  // Effect to refetch attendance when date changes
   useEffect(() => {
     refetchAttendance();
   }, [selectedDate, refetchAttendance]);
@@ -143,7 +130,6 @@ const AttendancePage = () => {
   const handleMarkAttendance = (student: StudentWithAttendance) => {
     setSelectedStudent(student);
     
-    // Check if student already has attendance for this day
     if (student.attendance) {
       setAttendanceStatus(student.attendance.status);
       setPermissionReason(student.attendance.reason || "");
@@ -173,13 +159,11 @@ const AttendancePage = () => {
     downloadAttendanceMutation.mutate();
   };
   
-  // Process and filter the students list with their attendance
   const processedStudents = React.useMemo(() => {
     if (!students) return [];
     
     return students
       .filter(student => {
-        // Apply search filter
         if (
           searchTerm &&
           !student.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
@@ -188,7 +172,6 @@ const AttendancePage = () => {
           return false;
         }
         
-        // Apply status filter if not "all"
         if (filterStatus !== "all" && attendanceData) {
           const attendance = attendanceData.find(a => a.studentId === student.id);
           if (!attendance || attendance.status !== filterStatus) {
@@ -199,7 +182,6 @@ const AttendancePage = () => {
         return true;
       })
       .map(student => {
-        // Merge student data with attendance data
         const attendance = attendanceData?.find(
           (a: Attendance) => a.studentId === student.id
         );
@@ -211,7 +193,6 @@ const AttendancePage = () => {
       });
   }, [students, attendanceData, searchTerm, filterStatus]);
   
-  // Helper function to get initials from name
   const getInitials = (name: string) => {
     return name
       .split(" ")
@@ -225,10 +206,9 @@ const AttendancePage = () => {
   
   return (
     <Layout title="Attendance">
-      <div className="space-y-6">
-        {/* Date navigation and controls */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div className="flex items-center">
+      <div className="space-y-4 md:space-y-6">
+        <div className="flex flex-col space-y-4 md:space-y-0 md:flex-row justify-between items-start md:items-center">
+          <div className="flex items-center w-full md:w-auto">
             <Button
               variant="outline"
               size="icon"
@@ -242,7 +222,7 @@ const AttendancePage = () => {
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
-                  className="min-w-[240px] justify-start text-left font-normal"
+                  className="flex-1 md:flex-none md:min-w-[240px] justify-start text-left font-normal text-sm md:text-base"
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
                   {format(selectedDate, "MMMM d, yyyy")}
@@ -277,7 +257,7 @@ const AttendancePage = () => {
               variant="ghost"
               size="sm"
               onClick={() => setSelectedDate(new Date())}
-              className="ml-2 text-muted-foreground hover:text-foreground"
+              className="ml-2 text-muted-foreground hover:text-foreground hidden md:flex"
             >
               Today
             </Button>
@@ -309,7 +289,7 @@ const AttendancePage = () => {
                 value={filterStatus}
                 onValueChange={setFilterStatus}
               >
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-full sm:w-[180px]">
                   <Filter className="mr-2 h-4 w-4" />
                   <SelectValue placeholder="Filter by status" />
                 </SelectTrigger>
@@ -326,6 +306,7 @@ const AttendancePage = () => {
                   variant="outline"
                   onClick={handleDownloadAttendance}
                   disabled={downloadAttendanceMutation.isPending}
+                  className="hidden sm:flex"
                 >
                   {downloadAttendanceMutation.isPending ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -339,7 +320,34 @@ const AttendancePage = () => {
           </div>
         </div>
         
-        {/* Attendance table */}
+        <div className="flex md:hidden justify-center">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSelectedDate(new Date())}
+            className="text-muted-foreground hover:text-foreground text-xs"
+          >
+            Today
+          </Button>
+          
+          {isAdmin && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDownloadAttendance}
+              disabled={downloadAttendanceMutation.isPending}
+              className="flex sm:hidden ml-2 text-xs"
+            >
+              {downloadAttendanceMutation.isPending ? (
+                <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+              ) : (
+                <Download className="mr-1 h-3 w-3" />
+              )}
+              Export
+            </Button>
+          )}
+        </div>
+        
         <div className="bg-white rounded-lg border border-border overflow-hidden shadow-sm">
           {isLoading ? (
             <div className="flex justify-center items-center h-64">
@@ -351,10 +359,10 @@ const AttendancePage = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[250px]">Student</TableHead>
-                    <TableHead className="w-[120px]">Room</TableHead>
-                    <TableHead className="w-[150px]">Department</TableHead>
+                    <TableHead className="w-[120px] hidden sm:table-cell">Room</TableHead>
+                    <TableHead className="w-[150px] hidden md:table-cell">Department</TableHead>
                     <TableHead className="w-[150px]">Status</TableHead>
-                    <TableHead className="w-[200px]">Reason</TableHead>
+                    <TableHead className="w-[200px] hidden md:table-cell">Reason</TableHead>
                     {!isAdmin && <TableHead className="w-[120px]">Actions</TableHead>}
                   </TableRow>
                 </TableHeader>
@@ -367,11 +375,11 @@ const AttendancePage = () => {
                             <AvatarImage src={student.photo} alt={student.name} />
                             <AvatarFallback>{getInitials(student.name)}</AvatarFallback>
                           </Avatar>
-                          <span>{student.name}</span>
+                          <span className="truncate max-w-[120px] sm:max-w-full">{student.name}</span>
                         </div>
                       </TableCell>
-                      <TableCell>Room {student.roomId}</TableCell>
-                      <TableCell>{student.department}</TableCell>
+                      <TableCell className="hidden sm:table-cell">Room {student.roomId}</TableCell>
+                      <TableCell className="hidden md:table-cell">{student.department}</TableCell>
                       <TableCell>
                         {student.attendance ? (
                           <AttendanceStatusBadge
@@ -382,7 +390,7 @@ const AttendancePage = () => {
                           <span className="text-sm text-muted-foreground">Not marked</span>
                         )}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden md:table-cell">
                         {student.attendance?.status === "permission" && student.attendance?.reason ? (
                           <span className="text-sm">{student.attendance.reason}</span>
                         ) : (
@@ -395,6 +403,7 @@ const AttendancePage = () => {
                             variant="outline"
                             size="sm"
                             onClick={() => handleMarkAttendance(student)}
+                            className="text-xs px-2 sm:px-4"
                           >
                             {student.attendance ? "Update" : "Mark"}
                           </Button>
@@ -406,8 +415,8 @@ const AttendancePage = () => {
               </Table>
             </div>
           ) : (
-            <div className="text-center p-16">
-              <p className="text-muted-foreground">
+            <div className="text-center p-8 md:p-16">
+              <p className="text-muted-foreground text-sm">
                 {searchTerm || filterStatus !== "all"
                   ? "No students match your search criteria."
                   : "No students available to mark attendance."}
@@ -417,107 +426,104 @@ const AttendancePage = () => {
         </div>
       </div>
       
-      {/* Mark Attendance Dialog */}
-      {!isAdmin && (
-        <Dialog open={markingDialogOpen} onOpenChange={setMarkingDialogOpen}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>
-                {selectedStudent?.attendance ? "Update Attendance" : "Mark Attendance"}
-              </DialogTitle>
-            </DialogHeader>
-            
-            {selectedStudent && (
-              <form onSubmit={handleSubmitAttendance} className="space-y-4 py-4">
-                <div className="flex items-center space-x-3 mb-4">
-                  <Avatar className="h-10 w-10">
-                    <AvatarImage src={selectedStudent.photo} alt={selectedStudent.name} />
-                    <AvatarFallback>{getInitials(selectedStudent.name)}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="font-medium">{selectedStudent.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      Room {selectedStudent.roomId} • {format(selectedDate, "MMMM d, yyyy")}
-                    </p>
-                  </div>
+      <Dialog open={markingDialogOpen} onOpenChange={setMarkingDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {selectedStudent?.attendance ? "Update Attendance" : "Mark Attendance"}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedStudent && (
+            <form onSubmit={handleSubmitAttendance} className="space-y-4 py-4">
+              <div className="flex items-center space-x-3 mb-4">
+                <Avatar className="h-10 w-10">
+                  <AvatarImage src={selectedStudent.photo} alt={selectedStudent.name} />
+                  <AvatarFallback>{getInitials(selectedStudent.name)}</AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="font-medium">{selectedStudent.name}</p>
+                  <p className="text-sm text-muted-foreground">
+                    Room {selectedStudent.roomId} • {format(selectedDate, "MMMM d, yyyy")}
+                  </p>
                 </div>
-                
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Attendance Status</label>
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      type="button"
-                      variant={attendanceStatus === "present" ? "default" : "outline"}
-                      className={`flex-1 ${
-                        attendanceStatus === "present" ? "" : "text-muted-foreground"
-                      }`}
-                      onClick={() => setAttendanceStatus("present")}
-                    >
-                      <Check className="mr-2 h-4 w-4" />
-                      Present
-                    </Button>
-                    
-                    <Button
-                      type="button"
-                      variant={attendanceStatus === "absent" ? "default" : "outline"}
-                      className={`flex-1 ${
-                        attendanceStatus === "absent" ? "" : "text-muted-foreground"
-                      }`}
-                      onClick={() => setAttendanceStatus("absent")}
-                    >
-                      <X className="mr-2 h-4 w-4" />
-                      Absent
-                    </Button>
-                    
-                    <Button
-                      type="button"
-                      variant={attendanceStatus === "permission" ? "default" : "outline"}
-                      className={`flex-1 ${
-                        attendanceStatus === "permission" ? "" : "text-muted-foreground"
-                      }`}
-                      onClick={() => setAttendanceStatus("permission")}
-                    >
-                      <Clock className="mr-2 h-4 w-4" />
-                      Permission
-                    </Button>
-                  </div>
-                </div>
-                
-                {attendanceStatus === "permission" && (
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Reason for Permission</label>
-                    <Textarea
-                      value={permissionReason}
-                      onChange={e => setPermissionReason(e.target.value)}
-                      placeholder="Enter reason for permission..."
-                      className="min-h-[80px]"
-                      required
-                    />
-                  </div>
-                )}
-                
-                <DialogFooter className="pt-4">
-                  <DialogClose asChild>
-                    <Button variant="outline" type="button">Cancel</Button>
-                  </DialogClose>
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Attendance Status</label>
+                <div className="flex flex-wrap gap-2">
                   <Button
-                    type="submit"
-                    disabled={
-                      markAttendanceMutation.isPending ||
-                      (attendanceStatus === "permission" && !permissionReason)
-                    }
+                    type="button"
+                    variant={attendanceStatus === "present" ? "default" : "outline"}
+                    className={`flex-1 ${
+                      attendanceStatus === "present" ? "" : "text-muted-foreground"
+                    }`}
+                    onClick={() => setAttendanceStatus("present")}
                   >
-                    {markAttendanceMutation.isPending && (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    )}
-                    {selectedStudent.attendance ? "Update Attendance" : "Mark Attendance"}
+                    <Check className="mr-2 h-4 w-4" />
+                    Present
                   </Button>
-                </DialogFooter>
-              </form>
-            )}
-          </DialogContent>
-        </Dialog>
-      )}
+                  
+                  <Button
+                    type="button"
+                    variant={attendanceStatus === "absent" ? "default" : "outline"}
+                    className={`flex-1 ${
+                      attendanceStatus === "absent" ? "" : "text-muted-foreground"
+                    }`}
+                    onClick={() => setAttendanceStatus("absent")}
+                  >
+                    <X className="mr-2 h-4 w-4" />
+                    Absent
+                  </Button>
+                  
+                  <Button
+                    type="button"
+                    variant={attendanceStatus === "permission" ? "default" : "outline"}
+                    className={`flex-1 ${
+                      attendanceStatus === "permission" ? "" : "text-muted-foreground"
+                    }`}
+                    onClick={() => setAttendanceStatus("permission")}
+                  >
+                    <Clock className="mr-2 h-4 w-4" />
+                    Permission
+                  </Button>
+                </div>
+              </div>
+              
+              {attendanceStatus === "permission" && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Reason for Permission</label>
+                  <Textarea
+                    value={permissionReason}
+                    onChange={e => setPermissionReason(e.target.value)}
+                    placeholder="Enter reason for permission..."
+                    className="min-h-[80px]"
+                    required
+                  />
+                </div>
+              )}
+              
+              <DialogFooter className="pt-4">
+                <DialogClose asChild>
+                  <Button variant="outline" type="button">Cancel</Button>
+                </DialogClose>
+                <Button
+                  type="submit"
+                  disabled={
+                    markAttendanceMutation.isPending ||
+                    (attendanceStatus === "permission" && !permissionReason)
+                  }
+                >
+                  {markAttendanceMutation.isPending && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
+                  {selectedStudent.attendance ? "Update Attendance" : "Mark Attendance"}
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 };
