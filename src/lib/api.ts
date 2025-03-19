@@ -1,4 +1,3 @@
-
 import { Room, Student, Attendance } from "@/types";
 
 // Mock data - this would be replaced with actual Supabase calls
@@ -298,4 +297,30 @@ export const downloadAttendance = async (month: string, format: 'csv' | 'excel' 
   // This is a mock function - in a real app, this would generate a proper file
   // For now it just returns an empty blob
   return new Blob([''], { type: 'application/octet-stream' });
+};
+
+// Adding new API functions for dashboard
+export const getStudentsCount = async (): Promise<number> => {
+  // This would fetch from Supabase in a real implementation
+  return 42; // Mock data
+};
+
+export const getRoomsCount = async (): Promise<number> => {
+  // This would fetch from Supabase in a real implementation
+  return 12; // Mock data
+};
+
+export const getAttendanceSummary = async (): Promise<{
+  presentCount: number;
+  absentCount: number;
+  permissionCount: number;
+  date: string;
+}> => {
+  // This would fetch from Supabase in a real implementation
+  return {
+    presentCount: 36,
+    absentCount: 4,
+    permissionCount: 2,
+    date: new Date().toISOString(),
+  }; // Mock data
 };

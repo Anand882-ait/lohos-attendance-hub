@@ -52,7 +52,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem("lohos_user", JSON.stringify(userWithoutPassword));
       
       toast.success(`Welcome back, ${foundUser.username}!`);
-      navigate("/rooms");
+      navigate("/dashboard");
     } catch (err: any) {
       setError(err.message);
       toast.error(err.message);

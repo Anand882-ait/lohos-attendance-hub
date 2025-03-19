@@ -14,7 +14,7 @@ const Login = () => {
 
   // If already logged in, redirect to dashboard
   if (user) {
-    return <Navigate to="/rooms" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -23,14 +23,14 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-md animate-scale-in">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold tracking-tight text-primary">LOHOS</h1>
           <p className="text-lg text-muted-foreground mt-2">Hostel Attendance Management</p>
         </div>
 
-        <div className="bg-white p-8 rounded-lg shadow-lg border border-border">
+        <div className="bg-white p-6 sm:p-8 rounded-lg shadow-lg border border-border">
           <h2 className="text-2xl font-medium mb-6">Sign In</h2>
           
           <form onSubmit={handleSubmit} className="space-y-4">

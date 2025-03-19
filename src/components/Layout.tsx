@@ -1,15 +1,18 @@
 
-import React from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { 
   LogOut, 
   Home, 
-  Users, 
   BookOpen, 
   Calendar, 
-  User 
+  User,
+  Menu,
+  X,
+  LayoutDashboard
 } from "lucide-react";
 
 interface LayoutProps {
@@ -20,24 +23,35 @@ interface LayoutProps {
 const Layout: React.FC<LayoutProps> = ({ children, title }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isMobile = useIsMobile();
+  const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
 
   if (!user) return <>{children}</>;
 
   const navItems = [
-    { name: "Dashboard", icon: Home, path: "/dashboard" },
+    { name: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
     { name: "Rooms", icon: BookOpen, path: "/rooms" },
     { name: "Attendance", icon: Calendar, path: "/attendance" },
     { name: "Profile", icon: User, path: "/profile" },
   ];
 
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
+
   return (
     <div className="min-h-screen flex bg-background">
       {/* Sidebar */}
-      <aside className="w-64 h-screen sticky top-0 bg-white border-r border-border flex flex-col transition-all duration-300 ease-in-out">
+      <aside 
+        className={`${
+          sidebarOpen ? "w-64" : "w-0 md:w-16"
+        } h-screen sticky top-0 bg-white border-r border-border flex flex-col transition-all duration-300 ease-in-out overflow-hidden`}
+      >
         {/* Logo */}
-        <div className="p-6">
-          <h1 className="text-2xl font-semibold text-primary tracking-tight">LOHOS</h1>
-          <p className="text-sm text-muted-foreground">Attendance Management</p>
+        <div className="p-4 md:p-6">
+          <h1 className={`text-2xl font-semibold text-primary tracking-tight ${!sidebarOpen && "md:hidden"}`}>LOHOS</h1>
+          <p className={`text-sm text-muted-foreground ${!sidebarOpen && "md:hidden"}`}>Attendance</p>
         </div>
 
         {/* Navigation */}
@@ -52,13 +66,13 @@ const Layout: React.FC<LayoutProps> = ({ children, title }) => {
                   : "text-muted-foreground hover:bg-secondary hover:text-foreground"}`}
             >
               <item.icon size={18} />
-              <span>{item.name}</span>
+              <span className={!sidebarOpen ? "md:hidden" : ""}>{item.name}</span>
             </button>
           ))}
         </nav>
 
         {/* User info */}
-        <div className="p-4 border-t border-border">
+        <div className={`p-4 border-t border-border ${!sidebarOpen && "md:hidden"}`}>
           <div className="flex items-center space-x-3 p-3">
             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
               <User size={18} />
@@ -82,15 +96,25 @@ const Layout: React.FC<LayoutProps> = ({ children, title }) => {
       {/* Main content */}
       <main className="flex-1 max-h-screen overflow-auto">
         {/* Header */}
-        <header className="sticky top-0 z-10 bg-white border-b border-border h-16 flex items-center px-6 justify-between">
-          <h1 className="text-xl font-medium">{title || "LOHOS Attendance"}</h1>
+        <header className="sticky top-0 z-10 bg-white border-b border-border h-16 flex items-center px-4 md:px-6 justify-between">
+          <div className="flex items-center">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={toggleSidebar} 
+              className="mr-2"
+            >
+              {sidebarOpen ? <X size={18} /> : <Menu size={18} />}
+            </Button>
+            <h1 className="text-xl font-medium">{title || "LOHOS Attendance"}</h1>
+          </div>
           <div className="flex space-x-2">
             {/* Additional header elements can go here */}
           </div>
         </header>
 
         {/* Content */}
-        <div className="p-6 animate-fade-in">
+        <div className="p-4 md:p-6 animate-fade-in">
           {children}
         </div>
       </main>
