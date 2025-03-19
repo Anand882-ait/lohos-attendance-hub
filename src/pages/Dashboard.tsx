@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -7,7 +6,7 @@ import Layout from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { getStudentsCount, getRoomsCount, getAttendanceSummary } from "@/lib/api";
-import { Loader2, Users, DoorClosed, CalendarCheck, BarChart3, Clock } from "lucide-react";
+import { Loader2, Users, DoorClosed, CalendarCheck, BarChart3, Clock, User } from "lucide-react";
 
 const Dashboard = () => {
   const { user } = useAuth();
