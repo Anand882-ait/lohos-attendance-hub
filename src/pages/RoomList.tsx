@@ -223,7 +223,7 @@ const RoomList = () => {
           <DialogHeader>
             <DialogTitle>{currentRoom ? "Edit Room" : "Add New Room"}</DialogTitle>
             <DialogDescription>
-              Room numbers can be like 101, F1, G1, etc.
+              Room numbers should be in format like F1, F13, G2, G19, etc.
             </DialogDescription>
           </DialogHeader>
           
@@ -234,7 +234,7 @@ const RoomList = () => {
                 id="roomNumber"
                 value={roomNumber}
                 onChange={(e) => setRoomNumber(e.target.value)}
-                placeholder="e.g. 101, F1, G1"
+                placeholder="e.g. F1, F13, G2, G19"
                 required
               />
             </div>

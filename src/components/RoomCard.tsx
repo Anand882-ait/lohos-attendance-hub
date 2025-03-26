@@ -23,7 +23,7 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, onEdit, onDelete }) => {
         <div className="flex justify-between items-start">
           <div>
             <h3 className="text-2xl font-medium mb-1">
-              Room {room.roomNumber}
+              {room.roomNumber}
             </h3>
             <p className="text-muted-foreground text-sm">
               Floor: {room.floor || "N/A"}
