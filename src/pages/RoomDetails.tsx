@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -37,15 +36,11 @@ const RoomDetails = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  // Search state
   const [searchTerm, setSearchTerm] = useState("");
-  
-  // Dialog state
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [currentStudent, setCurrentStudent] = useState<Student | null>(null);
-  
-  // Form state
+
   const [name, setName] = useState("");
   const [department, setDepartment] = useState("");
   const [batch, setBatch] = useState("");
@@ -55,8 +50,7 @@ const RoomDetails = () => {
   const [motherPhone, setMotherPhone] = useState("");
   const [studentPhone, setStudentPhone] = useState("");
   const [photo, setPhoto] = useState("");
-  
-  // Fetch room data
+
   const {
     data: room,
     isLoading: isRoomLoading,
@@ -66,8 +60,7 @@ const RoomDetails = () => {
     queryFn: () => getRoom(id!),
     enabled: !!id,
   });
-  
-  // Fetch students in this room
+
   const {
     data: students,
     isLoading: isStudentsLoading,
@@ -77,8 +70,7 @@ const RoomDetails = () => {
     queryFn: () => getStudentsByRoom(id!),
     enabled: !!id,
   });
-  
-  // Create student mutation
+
   const createStudentMutation = useMutation({
     mutationFn: createStudent,
     onSuccess: () => {
@@ -91,8 +83,7 @@ const RoomDetails = () => {
       toast.error(`Failed to add student: ${error.message}`);
     },
   });
-  
-  // Update student mutation
+
   const updateStudentMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<Student> }) => updateStudent(id, data),
     onSuccess: () => {
@@ -105,8 +96,7 @@ const RoomDetails = () => {
       toast.error(`Failed to update student: ${error.message}`);
     },
   });
-  
-  // Delete student mutation
+
   const deleteStudentMutation = useMutation({
     mutationFn: deleteStudent,
     onSuccess: () => {
@@ -118,7 +108,7 @@ const RoomDetails = () => {
       toast.error(`Failed to remove student: ${error.message}`);
     },
   });
-  
+
   const resetForm = () => {
     setName("");
     setDepartment("");
@@ -131,7 +121,7 @@ const RoomDetails = () => {
     setPhoto("");
     setCurrentStudent(null);
   };
-  
+
   const handleOpenDialog = (student?: Student) => {
     if (student) {
       setCurrentStudent(student);
@@ -149,7 +139,7 @@ const RoomDetails = () => {
     }
     setIsDialogOpen(true);
   };
-  
+
   const handleOpenDeleteDialog = (id: string) => {
     const student = students?.find(s => s.id === id);
     if (student) {
@@ -157,7 +147,7 @@ const RoomDetails = () => {
       setIsDeleteDialogOpen(true);
     }
   };
-  
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -180,23 +170,23 @@ const RoomDetails = () => {
       createStudentMutation.mutate(data);
     }
   };
-  
+
   const handleDelete = () => {
     if (currentStudent) {
       deleteStudentMutation.mutate(currentStudent.id);
     }
   };
-  
+
   const isLoading = isRoomLoading || isStudentsLoading;
   const error = roomError || studentsError;
-  
+
   const filteredStudents = students?.filter(student =>
     student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     student.department.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
-    <Layout title={room ? `Room ${room.roomNumber}` : "Room Details"}>
+    <Layout title={room ? `${room.roomNumber}` : "Room Details"}>
       <div className="mb-6 space-y-4">
         <Button
           variant="ghost"
@@ -215,7 +205,7 @@ const RoomDetails = () => {
                 <BookOpen size={24} />
               </div>
               <div>
-                <h2 className="text-2xl font-bold">Room {room.roomNumber}</h2>
+                <h2 className="text-2xl font-bold">{room.roomNumber}</h2>
                 <p className="text-muted-foreground">
                   Floor: {room.floor || "N/A"} | Capacity: {room.capacity || 0} | 
                   Occupancy: {room.occupiedCount || 0}/{room.capacity || 0}
@@ -284,7 +274,6 @@ const RoomDetails = () => {
         </div>
       )}
       
-      {/* Create/Edit Student Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
@@ -410,13 +399,12 @@ const RoomDetails = () => {
         </DialogContent>
       </Dialog>
       
-      {/* Delete Confirmation Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will remove {currentStudent?.name} from Room {room?.roomNumber}.
+              This will remove {currentStudent?.name} from {room?.roomNumber}.
               This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
