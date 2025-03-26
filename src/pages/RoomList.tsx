@@ -50,6 +50,9 @@ const RoomList = () => {
   const [floor, setFloor] = useState("");
   const [capacity, setCapacity] = useState<number>(4);
   
+  // Form validation
+  const [roomNumberError, setRoomNumberError] = useState("");
+  
   // Fetch rooms data
   const { data: rooms, isLoading, error } = useQuery({
     queryKey: ["rooms"],
@@ -112,6 +115,7 @@ const RoomList = () => {
     setFloor("");
     setCapacity(4);
     setCurrentRoom(null);
+    setRoomNumberError("");
   };
   
   const handleOpenDialog = (room?: Room) => {
@@ -131,8 +135,33 @@ const RoomList = () => {
     }
   };
   
+  const validateRoomNumber = (value: string) => {
+    // Check if the room number follows the format: one letter followed by one or two digits
+    const roomNumberRegex = /^[A-Za-z][0-9]{1,2}$/;
+    if (!roomNumberRegex.test(value)) {
+      setRoomNumberError("Room number must be one letter followed by 1-2 digits (e.g., F1, G12)");
+      return false;
+    }
+    setRoomNumberError("");
+    return true;
+  };
+  
+  const handleRoomNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setRoomNumber(value);
+    if (value) {
+      validateRoomNumber(value);
+    } else {
+      setRoomNumberError("");
+    }
+  };
+  
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateRoomNumber(roomNumber)) {
+      return;
+    }
     
     const data = {
       roomNumber,
@@ -223,7 +252,7 @@ const RoomList = () => {
           <DialogHeader>
             <DialogTitle>{currentRoom ? "Edit Room" : "Add New Room"}</DialogTitle>
             <DialogDescription>
-              Room numbers should be in format like F1, F13, G2, G19, etc.
+              Room numbers should be in format like F1, G12, A2 (one letter followed by 1-2 digits).
             </DialogDescription>
           </DialogHeader>
           
@@ -233,10 +262,14 @@ const RoomList = () => {
               <Input
                 id="roomNumber"
                 value={roomNumber}
-                onChange={(e) => setRoomNumber(e.target.value)}
-                placeholder="e.g. F1, F13, G2, G19"
+                onChange={handleRoomNumberChange}
+                placeholder="e.g. F1, G12, A2"
                 required
+                className={roomNumberError ? "border-destructive" : ""}
               />
+              {roomNumberError && (
+                <p className="text-xs text-destructive mt-1">{roomNumberError}</p>
+              )}
             </div>
             
             <div className="space-y-2">
@@ -268,7 +301,7 @@ const RoomList = () => {
               </DialogClose>
               <Button
                 type="submit"
-                disabled={createRoomMutation.isPending || updateRoomMutation.isPending}
+                disabled={createRoomMutation.isPending || updateRoomMutation.isPending || !!roomNumberError}
               >
                 {(createRoomMutation.isPending || updateRoomMutation.isPending) && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
