@@ -76,6 +76,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setError(null);
     
     try {
+      // Validate username and password first (client-side check)
+      if (username !== "Admin" && username !== "Staff") {
+        throw new Error("Invalid username. Use 'Admin' or 'Staff'");
+      }
+      
+      const expectedPassword = username === "Admin" ? "lohos@" : "lohosstaff@";
+      if (password !== expectedPassword) {
+        throw new Error("Invalid password");
+      }
+      
       // Map username to the correct email format for authentication
       const email = `${username.toLowerCase()}@lohos.edu`;
       

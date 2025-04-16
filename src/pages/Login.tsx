@@ -28,7 +28,13 @@ const Login = () => {
       return;
     }
     
-    // We'll send the username and password directly to the login function
+    // Validate password based on username
+    const validPassword = username === "Admin" ? "lohos@" : "lohosstaff@";
+    if (password !== validPassword) {
+      toast.error("Invalid password");
+      return;
+    }
+    
     await login(username, password);
   };
 
