@@ -76,7 +76,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setError(null);
     
     try {
-      // For this app, we're treating the username as the email
+      // Map username to the correct email format for authentication
       const email = `${username.toLowerCase()}@lohos.edu`;
       
       const { data, error } = await supabase.auth.signInWithPassword({
