@@ -31,7 +31,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           
           setUser({
             id: session.user.id,
-            username: profile?.username || session.user.email?.split('@')[0] || 'User',
+            username: profile?.username || 'User',
             role: profile?.role as "admin" | "staff"
           });
         } else {
@@ -56,7 +56,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           .then(({ data: profile }) => {
             setUser({
               id: session.user.id,
-              username: profile?.username || session.user.email?.split('@')[0] || 'User',
+              username: profile?.username || 'User',
               role: profile?.role as "admin" | "staff"
             });
             setIsLoading(false);
@@ -76,17 +76,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setError(null);
     
     try {
-      // Validate username and password first (client-side check)
-      if (username !== "Admin" && username !== "Staff") {
-        throw new Error("Invalid username. Use 'Admin' or 'Staff'");
+      // Hard-coded credentials for demo purposes
+      const validCredentials = [
+        { username: "Admin", password: "lohos@", role: "admin" },
+        { username: "Staff", password: "lohosstaff@", role: "staff" }
+      ];
+      
+      // Find matching credentials
+      const matchedCredential = validCredentials.find(
+        cred => cred.username === username && cred.password === password
+      );
+      
+      if (!matchedCredential) {
+        throw new Error("Invalid username or password");
       }
       
-      const expectedPassword = username === "Admin" ? "lohos@" : "lohosstaff@";
-      if (password !== expectedPassword) {
-        throw new Error("Invalid password");
-      }
-      
-      // Map username to the correct email format for authentication
+      // Construct email from username for Supabase auth
       const email = `${username.toLowerCase()}@lohos.edu`;
       
       const { data, error } = await supabase.auth.signInWithPassword({

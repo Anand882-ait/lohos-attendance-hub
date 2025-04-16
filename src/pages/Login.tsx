@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, Eye, EyeOff } from "lucide-react";
-import { toast } from "sonner";
 
 const Login = () => {
   const { user, login, isLoading, error } = useAuth();
@@ -22,16 +21,8 @@ const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate username is either 'Admin' or 'Staff'
-    if (username !== "Admin" && username !== "Staff") {
-      toast.error("Invalid username. Please use 'Admin' or 'Staff'");
-      return;
-    }
-    
-    // Validate password based on username
-    const validPassword = username === "Admin" ? "lohos@" : "lohosstaff@";
-    if (password !== validPassword) {
-      toast.error("Invalid password");
+    // Basic input validation
+    if (!username || !password) {
       return;
     }
     

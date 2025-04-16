@@ -65,11 +65,6 @@ const Profile = () => {
                 <h3 className="text-lg font-medium mb-3">Account Management</h3>
                 
                 <div className="space-y-3">
-                  <Button variant="outline" className="w-full justify-start">
-                    <Key className="mr-2 h-4 w-4" />
-                    Change Password
-                  </Button>
-                  
                   <Button 
                     variant="outline" 
                     className="w-full justify-start text-destructive hover:bg-destructive/10"
