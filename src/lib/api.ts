@@ -341,7 +341,7 @@ export const getAttendance = async (date?: string): Promise<Attendance[]> => {
     id: record.id,
     studentId: record.student_id,
     date: record.date,
-    status: record.status,
+    status: record.status as "present" | "absent" | "permission",
     reason: record.reason,
     markedBy: record.marked_by,
     markedAt: record.marked_at
@@ -375,7 +375,7 @@ export const getStudentAttendance = async (studentId: string, month?: string): P
     id: record.id,
     studentId: record.student_id,
     date: record.date,
-    status: record.status,
+    status: record.status as "present" | "absent" | "permission",
     reason: record.reason,
     markedBy: record.marked_by,
     markedAt: record.marked_at
@@ -429,7 +429,7 @@ export const markAttendance = async (attendanceData: Omit<Attendance, "id" | "ma
     id: result.id,
     studentId: result.student_id,
     date: result.date,
-    status: result.status,
+    status: result.status as "present" | "absent" | "permission",
     reason: result.reason,
     markedBy: result.marked_by,
     markedAt: result.marked_at
