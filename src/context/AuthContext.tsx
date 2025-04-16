@@ -3,32 +3,72 @@ import React, { createContext, useState, useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { User, AuthContextType } from "@/types";
-
-// This is temporary. In a real app, this would come from Supabase
-const USERS = [
-  { id: "1", username: "Admin", password: "lohos@", role: "admin" as const },
-  { id: "2", username: "Staff", password: "lohosstaff@", role: "staff" as const }
-];
+import { supabase } from "@/integrations/supabase/client";
+import { Session } from "@supabase/supabase-js";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check for existing session in localStorage
-    const savedUser = localStorage.getItem("lohos_user");
-    if (savedUser) {
-      try {
-        setUser(JSON.parse(savedUser));
-      } catch (e) {
-        localStorage.removeItem("lohos_user");
+    // Set up auth state listener first
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        setSession(session);
+        
+        if (session?.user) {
+          // Fetch user profile data including role
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("username, role")
+            .eq("id", session.user.id)
+            .single();
+          
+          setUser({
+            id: session.user.id,
+            username: profile?.username || session.user.email?.split('@')[0] || 'User',
+            role: profile?.role as "admin" | "staff"
+          });
+        } else {
+          setUser(null);
+        }
+        
+        setIsLoading(false);
       }
-    }
-    setIsLoading(false);
+    );
+
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      
+      if (session?.user) {
+        // Fetch user profile data including role
+        supabase
+          .from("profiles")
+          .select("username, role")
+          .eq("id", session.user.id)
+          .single()
+          .then(({ data: profile }) => {
+            setUser({
+              id: session.user.id,
+              username: profile?.username || session.user.email?.split('@')[0] || 'User',
+              role: profile?.role as "admin" | "staff"
+            });
+            setIsLoading(false);
+          });
+      } else {
+        setIsLoading(false);
+      }
+    });
+
+    return () => {
+      subscription?.unsubscribe();
+    };
   }, []);
 
   const login = async (username: string, password: string) => {
@@ -36,34 +76,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setError(null);
     
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 800));
+      // For this app, we're treating the username as the email
+      const email = `${username.toLowerCase()}@lohos.edu`;
       
-      const foundUser = USERS.find(
-        u => u.username.toLowerCase() === username.toLowerCase() && u.password === password
-      );
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
       
-      if (!foundUser) {
-        throw new Error("Invalid username or password");
+      if (error) throw error;
+      
+      if (data.user) {
+        toast.success(`Welcome back, ${username}!`);
+        navigate("/dashboard");
       }
-      
-      const { password: _, ...userWithoutPassword } = foundUser;
-      setUser(userWithoutPassword);
-      localStorage.setItem("lohos_user", JSON.stringify(userWithoutPassword));
-      
-      toast.success(`Welcome back, ${foundUser.username}!`);
-      navigate("/dashboard");
     } catch (err: any) {
-      setError(err.message);
-      toast.error(err.message);
+      setError(err.message || "Login failed. Please check your credentials.");
+      toast.error(err.message || "Login failed");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    const { error } = await supabase.auth.signOut();
+    
+    if (error) {
+      toast.error("Failed to log out");
+      return;
+    }
+    
     setUser(null);
-    localStorage.removeItem("lohos_user");
+    setSession(null);
     navigate("/login");
     toast.info("You have been logged out");
   };

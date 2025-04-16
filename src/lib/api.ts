@@ -1,313 +1,466 @@
+
 import { Room, Student, Attendance } from "@/types";
-
-// Mock data - this would be replaced with actual Supabase calls
-let rooms: Room[] = [
-  {
-    id: "1",
-    roomNumber: "101",
-    floor: "1",
-    capacity: 4,
-    occupiedCount: 3,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  },
-  {
-    id: "2",
-    roomNumber: "102",
-    floor: "1",
-    capacity: 4,
-    occupiedCount: 2,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  },
-  {
-    id: "3",
-    roomNumber: "201",
-    floor: "2",
-    capacity: 2,
-    occupiedCount: 2,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  }
-];
-
-let students: Student[] = [
-  {
-    id: "1",
-    roomId: "1",
-    name: "John Doe",
-    department: "Computer Science",
-    batch: "2025-2028",
-    fatherName: "Michael Doe",
-    motherName: "Sarah Doe",
-    fatherPhone: "9876543210",
-    motherPhone: "8765432109",
-    studentPhone: "7654321098",
-    photo: "https://randomuser.me/api/portraits/men/1.jpg",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  },
-  {
-    id: "2",
-    roomId: "1",
-    name: "Jane Smith",
-    department: "Electrical Engineering",
-    batch: "2024-2027",
-    fatherName: "Robert Smith",
-    motherName: "Emily Smith",
-    fatherPhone: "9876543211",
-    motherPhone: "8765432110",
-    studentPhone: "7654321099",
-    photo: "https://randomuser.me/api/portraits/women/1.jpg",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  },
-  {
-    id: "3",
-    roomId: "1",
-    name: "Alex Johnson",
-    department: "Mechanical Engineering",
-    batch: "2025-2028",
-    fatherName: "David Johnson",
-    motherName: "Lisa Johnson",
-    fatherPhone: "9876543212",
-    motherPhone: "8765432111",
-    studentPhone: "7654321100",
-    photo: "https://randomuser.me/api/portraits/men/2.jpg",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  },
-  {
-    id: "4",
-    roomId: "2",
-    name: "Emma Davis",
-    department: "Civil Engineering",
-    batch: "2023-2026",
-    fatherName: "William Davis",
-    motherName: "Olivia Davis",
-    fatherPhone: "9876543213",
-    motherPhone: "8765432112",
-    studentPhone: "7654321101",
-    photo: "https://randomuser.me/api/portraits/women/2.jpg",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  },
-  {
-    id: "5",
-    roomId: "2",
-    name: "Daniel Wilson",
-    department: "Information Technology",
-    batch: "2025-2028",
-    fatherName: "James Wilson",
-    motherName: "Sophia Wilson",
-    fatherPhone: "9876543214",
-    motherPhone: "8765432113",
-    studentPhone: "7654321102",
-    photo: "https://randomuser.me/api/portraits/men/3.jpg",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  }
-];
-
-let attendanceRecords: Attendance[] = [
-  {
-    id: "1",
-    studentId: "1",
-    date: new Date().toISOString().split("T")[0],
-    status: "present",
-    markedBy: "2",
-    markedAt: new Date().toISOString()
-  },
-  {
-    id: "2",
-    studentId: "2",
-    date: new Date().toISOString().split("T")[0],
-    status: "absent",
-    markedBy: "2",
-    markedAt: new Date().toISOString()
-  },
-  {
-    id: "3",
-    studentId: "3",
-    date: new Date().toISOString().split("T")[0],
-    status: "permission",
-    reason: "Medical appointment",
-    markedBy: "2",
-    markedAt: new Date().toISOString()
-  }
-];
-
-// Helper function to generate IDs
-const generateId = () => Math.random().toString(36).substring(2, 11);
+import { supabase } from "@/integrations/supabase/client";
 
 // Room APIs
 export const getRooms = async (): Promise<Room[]> => {
-  await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
-  return [...rooms];
+  const { data, error } = await supabase
+    .from("rooms")
+    .select("*")
+    .order("room_number");
+  
+  if (error) throw error;
+  
+  return data.map(room => ({
+    id: room.id,
+    roomNumber: room.room_number,
+    floor: room.floor,
+    capacity: room.capacity,
+    occupiedCount: room.occupied_count,
+    createdAt: room.created_at,
+    updatedAt: room.updated_at
+  }));
 };
 
 export const getRoom = async (id: string): Promise<Room | null> => {
-  await new Promise(resolve => setTimeout(resolve, 300));
-  return rooms.find(room => room.id === id) || null;
+  const { data, error } = await supabase
+    .from("rooms")
+    .select("*")
+    .eq("id", id)
+    .single();
+  
+  if (error) {
+    if (error.code === "PGRST116") return null; // Record not found
+    throw error;
+  }
+  
+  return {
+    id: data.id,
+    roomNumber: data.room_number,
+    floor: data.floor,
+    capacity: data.capacity,
+    occupiedCount: data.occupied_count,
+    createdAt: data.created_at,
+    updatedAt: data.updated_at
+  };
 };
 
 export const createRoom = async (roomData: Omit<Room, "id" | "createdAt" | "updatedAt">): Promise<Room> => {
-  await new Promise(resolve => setTimeout(resolve, 800));
-  const newRoom: Room = {
-    id: generateId(),
-    ...roomData,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+  const { data, error } = await supabase
+    .from("rooms")
+    .insert({
+      room_number: roomData.roomNumber,
+      floor: roomData.floor,
+      capacity: roomData.capacity,
+      occupied_count: roomData.occupiedCount || 0
+    })
+    .select()
+    .single();
+  
+  if (error) throw error;
+  
+  return {
+    id: data.id,
+    roomNumber: data.room_number,
+    floor: data.floor,
+    capacity: data.capacity,
+    occupiedCount: data.occupied_count,
+    createdAt: data.created_at,
+    updatedAt: data.updated_at
   };
-  rooms = [...rooms, newRoom];
-  return newRoom;
 };
 
 export const updateRoom = async (id: string, roomData: Partial<Room>): Promise<Room> => {
-  await new Promise(resolve => setTimeout(resolve, 800));
-  const roomIndex = rooms.findIndex(room => room.id === id);
-  if (roomIndex === -1) throw new Error("Room not found");
+  const updates: any = {};
   
-  const updatedRoom = {
-    ...rooms[roomIndex],
-    ...roomData,
-    updatedAt: new Date().toISOString()
+  if (roomData.roomNumber !== undefined) updates.room_number = roomData.roomNumber;
+  if (roomData.floor !== undefined) updates.floor = roomData.floor;
+  if (roomData.capacity !== undefined) updates.capacity = roomData.capacity;
+  if (roomData.occupiedCount !== undefined) updates.occupied_count = roomData.occupiedCount;
+  
+  const { data, error } = await supabase
+    .from("rooms")
+    .update(updates)
+    .eq("id", id)
+    .select()
+    .single();
+  
+  if (error) throw error;
+  
+  return {
+    id: data.id,
+    roomNumber: data.room_number,
+    floor: data.floor,
+    capacity: data.capacity,
+    occupiedCount: data.occupied_count,
+    createdAt: data.created_at,
+    updatedAt: data.updated_at
   };
-  
-  rooms = [
-    ...rooms.slice(0, roomIndex),
-    updatedRoom,
-    ...rooms.slice(roomIndex + 1)
-  ];
-  
-  return updatedRoom;
 };
 
 export const deleteRoom = async (id: string): Promise<void> => {
-  await new Promise(resolve => setTimeout(resolve, 800));
-  rooms = rooms.filter(room => room.id !== id);
+  const { error } = await supabase
+    .from("rooms")
+    .delete()
+    .eq("id", id);
+  
+  if (error) throw error;
 };
 
 // Student APIs
 export const getStudents = async (): Promise<Student[]> => {
-  await new Promise(resolve => setTimeout(resolve, 500));
-  return [...students];
+  const { data, error } = await supabase
+    .from("students")
+    .select("*")
+    .order("name");
+  
+  if (error) throw error;
+  
+  return data.map(student => ({
+    id: student.id,
+    roomId: student.room_id,
+    name: student.name,
+    department: student.department,
+    batch: student.batch,
+    fatherName: student.father_name,
+    motherName: student.mother_name,
+    fatherPhone: student.father_phone,
+    motherPhone: student.mother_phone,
+    studentPhone: student.student_phone,
+    photo: student.photo,
+    createdAt: student.created_at,
+    updatedAt: student.updated_at
+  }));
 };
 
 export const getStudentsByRoom = async (roomId: string): Promise<Student[]> => {
-  await new Promise(resolve => setTimeout(resolve, 300));
-  return students.filter(student => student.roomId === roomId);
+  const { data, error } = await supabase
+    .from("students")
+    .select("*")
+    .eq("room_id", roomId)
+    .order("name");
+  
+  if (error) throw error;
+  
+  return data.map(student => ({
+    id: student.id,
+    roomId: student.room_id,
+    name: student.name,
+    department: student.department,
+    batch: student.batch,
+    fatherName: student.father_name,
+    motherName: student.mother_name,
+    fatherPhone: student.father_phone,
+    motherPhone: student.mother_phone,
+    studentPhone: student.student_phone,
+    photo: student.photo,
+    createdAt: student.created_at,
+    updatedAt: student.updated_at
+  }));
 };
 
 export const getStudent = async (id: string): Promise<Student | null> => {
-  await new Promise(resolve => setTimeout(resolve, 300));
-  return students.find(student => student.id === id) || null;
+  const { data, error } = await supabase
+    .from("students")
+    .select("*")
+    .eq("id", id)
+    .single();
+  
+  if (error) {
+    if (error.code === "PGRST116") return null; // Record not found
+    throw error;
+  }
+  
+  return {
+    id: data.id,
+    roomId: data.room_id,
+    name: data.name,
+    department: data.department,
+    batch: data.batch,
+    fatherName: data.father_name,
+    motherName: data.mother_name,
+    fatherPhone: data.father_phone,
+    motherPhone: data.mother_phone,
+    studentPhone: data.student_phone,
+    photo: data.photo,
+    createdAt: data.created_at,
+    updatedAt: data.updated_at
+  };
 };
 
 export const createStudent = async (studentData: Omit<Student, "id" | "createdAt" | "updatedAt">): Promise<Student> => {
-  await new Promise(resolve => setTimeout(resolve, 800));
-  const newStudent: Student = {
-    id: generateId(),
-    ...studentData,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+  const { data, error } = await supabase
+    .from("students")
+    .insert({
+      room_id: studentData.roomId,
+      name: studentData.name,
+      department: studentData.department,
+      batch: studentData.batch,
+      father_name: studentData.fatherName,
+      mother_name: studentData.motherName,
+      father_phone: studentData.fatherPhone,
+      mother_phone: studentData.motherPhone,
+      student_phone: studentData.studentPhone,
+      photo: studentData.photo
+    })
+    .select()
+    .single();
+  
+  if (error) throw error;
+  
+  // Update room occupied count
+  if (studentData.roomId) {
+    const room = await getRoom(studentData.roomId);
+    if (room) {
+      await updateRoom(studentData.roomId, {
+        occupiedCount: (room.occupiedCount || 0) + 1
+      });
+    }
+  }
+  
+  return {
+    id: data.id,
+    roomId: data.room_id,
+    name: data.name,
+    department: data.department,
+    batch: data.batch,
+    fatherName: data.father_name,
+    motherName: data.mother_name,
+    fatherPhone: data.father_phone,
+    motherPhone: data.mother_phone,
+    studentPhone: data.student_phone,
+    photo: data.photo,
+    createdAt: data.created_at,
+    updatedAt: data.updated_at
   };
-  students = [...students, newStudent];
-  return newStudent;
 };
 
 export const updateStudent = async (id: string, studentData: Partial<Student>): Promise<Student> => {
-  await new Promise(resolve => setTimeout(resolve, 800));
-  const studentIndex = students.findIndex(student => student.id === id);
-  if (studentIndex === -1) throw new Error("Student not found");
+  // Get current student data for room occupancy check
+  const currentStudent = await getStudent(id);
   
-  const updatedStudent = {
-    ...students[studentIndex],
-    ...studentData,
-    updatedAt: new Date().toISOString()
+  const updates: any = {};
+  
+  if (studentData.roomId !== undefined) updates.room_id = studentData.roomId;
+  if (studentData.name !== undefined) updates.name = studentData.name;
+  if (studentData.department !== undefined) updates.department = studentData.department;
+  if (studentData.batch !== undefined) updates.batch = studentData.batch;
+  if (studentData.fatherName !== undefined) updates.father_name = studentData.fatherName;
+  if (studentData.motherName !== undefined) updates.mother_name = studentData.motherName;
+  if (studentData.fatherPhone !== undefined) updates.father_phone = studentData.fatherPhone;
+  if (studentData.motherPhone !== undefined) updates.mother_phone = studentData.motherPhone;
+  if (studentData.studentPhone !== undefined) updates.student_phone = studentData.studentPhone;
+  if (studentData.photo !== undefined) updates.photo = studentData.photo;
+  
+  const { data, error } = await supabase
+    .from("students")
+    .update(updates)
+    .eq("id", id)
+    .select()
+    .single();
+  
+  if (error) throw error;
+  
+  // Update room occupied counts if room assignment changed
+  if (currentStudent && studentData.roomId !== undefined && currentStudent.roomId !== studentData.roomId) {
+    // Decrement old room count
+    if (currentStudent.roomId) {
+      const oldRoom = await getRoom(currentStudent.roomId);
+      if (oldRoom && oldRoom.occupiedCount && oldRoom.occupiedCount > 0) {
+        await updateRoom(currentStudent.roomId, {
+          occupiedCount: oldRoom.occupiedCount - 1
+        });
+      }
+    }
+    
+    // Increment new room count
+    if (studentData.roomId) {
+      const newRoom = await getRoom(studentData.roomId);
+      if (newRoom) {
+        await updateRoom(studentData.roomId, {
+          occupiedCount: (newRoom.occupiedCount || 0) + 1
+        });
+      }
+    }
+  }
+  
+  return {
+    id: data.id,
+    roomId: data.room_id,
+    name: data.name,
+    department: data.department,
+    batch: data.batch,
+    fatherName: data.father_name,
+    motherName: data.mother_name,
+    fatherPhone: data.father_phone,
+    motherPhone: data.mother_phone,
+    studentPhone: data.student_phone,
+    photo: data.photo,
+    createdAt: data.created_at,
+    updatedAt: data.updated_at
   };
-  
-  students = [
-    ...students.slice(0, studentIndex),
-    updatedStudent,
-    ...students.slice(studentIndex + 1)
-  ];
-  
-  return updatedStudent;
 };
 
 export const deleteStudent = async (id: string): Promise<void> => {
-  await new Promise(resolve => setTimeout(resolve, 800));
-  students = students.filter(student => student.id !== id);
+  // Get student data for room occupancy update
+  const student = await getStudent(id);
+  
+  const { error } = await supabase
+    .from("students")
+    .delete()
+    .eq("id", id);
+  
+  if (error) throw error;
+  
+  // Update room occupied count
+  if (student && student.roomId) {
+    const room = await getRoom(student.roomId);
+    if (room && room.occupiedCount && room.occupiedCount > 0) {
+      await updateRoom(student.roomId, {
+        occupiedCount: room.occupiedCount - 1
+      });
+    }
+  }
 };
 
 // Attendance APIs
 export const getAttendance = async (date?: string): Promise<Attendance[]> => {
-  await new Promise(resolve => setTimeout(resolve, 500));
-  if (!date) return [...attendanceRecords];
-  return attendanceRecords.filter(record => record.date === date);
+  let query = supabase
+    .from("attendance")
+    .select("*");
+  
+  if (date) {
+    query = query.eq("date", date);
+  }
+  
+  const { data, error } = await query;
+  
+  if (error) throw error;
+  
+  return data.map(record => ({
+    id: record.id,
+    studentId: record.student_id,
+    date: record.date,
+    status: record.status,
+    reason: record.reason,
+    markedBy: record.marked_by,
+    markedAt: record.marked_at
+  }));
 };
 
 export const getStudentAttendance = async (studentId: string, month?: string): Promise<Attendance[]> => {
-  await new Promise(resolve => setTimeout(resolve, 300));
-  let records = attendanceRecords.filter(record => record.studentId === studentId);
+  let query = supabase
+    .from("attendance")
+    .select("*")
+    .eq("student_id", studentId);
   
   if (month) {
-    records = records.filter(record => {
-      const recordMonth = record.date.split('-')[1];
-      return recordMonth === month;
-    });
+    // First day of month
+    const startDate = `${month}-01`;
+    // Last day of month (approximation)
+    const endDate = month === "12" 
+      ? `${parseInt(month.split('-')[0]) + 1}-01-01`
+      : `${month.split('-')[0]}-${(parseInt(month.split('-')[1]) + 1).toString().padStart(2, '0')}-01`;
+    
+    query = query
+      .gte("date", startDate)
+      .lt("date", endDate);
   }
   
-  return records;
+  const { data, error } = await query;
+  
+  if (error) throw error;
+  
+  return data.map(record => ({
+    id: record.id,
+    studentId: record.student_id,
+    date: record.date,
+    status: record.status,
+    reason: record.reason,
+    markedBy: record.marked_by,
+    markedAt: record.marked_at
+  }));
 };
 
 export const markAttendance = async (attendanceData: Omit<Attendance, "id" | "markedAt">): Promise<Attendance> => {
-  await new Promise(resolve => setTimeout(resolve, 800));
-  
   // Check if attendance already exists for this student and date
-  const existingIndex = attendanceRecords.findIndex(
-    record => record.studentId === attendanceData.studentId && record.date === attendanceData.date
-  );
+  const { data: existingRecords } = await supabase
+    .from("attendance")
+    .select("id")
+    .eq("student_id", attendanceData.studentId)
+    .eq("date", attendanceData.date);
   
-  const newAttendance: Attendance = {
-    id: existingIndex >= 0 ? attendanceRecords[existingIndex].id : generateId(),
-    ...attendanceData,
-    markedAt: new Date().toISOString()
-  };
+  let result;
   
-  if (existingIndex >= 0) {
+  if (existingRecords && existingRecords.length > 0) {
     // Update existing record
-    attendanceRecords = [
-      ...attendanceRecords.slice(0, existingIndex),
-      newAttendance,
-      ...attendanceRecords.slice(existingIndex + 1)
-    ];
+    const { data, error } = await supabase
+      .from("attendance")
+      .update({
+        status: attendanceData.status,
+        reason: attendanceData.reason,
+        marked_by: attendanceData.markedBy
+      })
+      .eq("id", existingRecords[0].id)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    result = data;
   } else {
-    // Add new record
-    attendanceRecords = [...attendanceRecords, newAttendance];
+    // Insert new record
+    const { data, error } = await supabase
+      .from("attendance")
+      .insert({
+        student_id: attendanceData.studentId,
+        date: attendanceData.date,
+        status: attendanceData.status,
+        reason: attendanceData.reason,
+        marked_by: attendanceData.markedBy
+      })
+      .select()
+      .single();
+    
+    if (error) throw error;
+    result = data;
   }
   
-  return newAttendance;
+  return {
+    id: result.id,
+    studentId: result.student_id,
+    date: result.date,
+    status: result.status,
+    reason: result.reason,
+    markedBy: result.marked_by,
+    markedAt: result.marked_at
+  };
 };
 
 export const downloadAttendance = async (month: string, format: 'csv' | 'excel' = 'excel'): Promise<Blob> => {
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  // This is a mock function - in a real app, this would generate a proper file
-  // For now it just returns an empty blob
+  // In a real implementation, this would generate a proper file from the database
+  // For now, we're returning a dummy blob as in the mock implementation
   return new Blob([''], { type: 'application/octet-stream' });
 };
 
-// Adding new API functions for dashboard
+// Dashboard data APIs
 export const getStudentsCount = async (): Promise<number> => {
-  // This would fetch from Supabase in a real implementation
-  return 42; // Mock data
+  const { count, error } = await supabase
+    .from("students")
+    .select("*", { count: "exact", head: true });
+  
+  if (error) throw error;
+  
+  return count || 0;
 };
 
 export const getRoomsCount = async (): Promise<number> => {
-  // This would fetch from Supabase in a real implementation
-  return 12; // Mock data
+  const { count, error } = await supabase
+    .from("rooms")
+    .select("*", { count: "exact", head: true });
+  
+  if (error) throw error;
+  
+  return count || 0;
 };
 
 export const getAttendanceSummary = async (): Promise<{
@@ -316,11 +469,23 @@ export const getAttendanceSummary = async (): Promise<{
   permissionCount: number;
   date: string;
 }> => {
-  // This would fetch from Supabase in a real implementation
+  const today = new Date().toISOString().split('T')[0];
+  
+  const { data, error } = await supabase
+    .from("attendance")
+    .select("status")
+    .eq("date", today);
+  
+  if (error) throw error;
+  
+  const presentCount = data.filter(record => record.status === "present").length;
+  const absentCount = data.filter(record => record.status === "absent").length;
+  const permissionCount = data.filter(record => record.status === "permission").length;
+  
   return {
-    presentCount: 36,
-    absentCount: 4,
-    permissionCount: 2,
-    date: new Date().toISOString(),
-  }; // Mock data
+    presentCount,
+    absentCount,
+    permissionCount,
+    date: today
+  };
 };

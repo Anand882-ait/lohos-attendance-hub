@@ -86,9 +86,9 @@ const Login = () => {
           </form>
           
           <div className="mt-6 text-sm text-center text-muted-foreground">
-            <p>Demo Credentials:</p>
-            <p className="mt-1">Admin: Username: <b>Admin</b> / Password: <b>lohos@</b></p>
-            <p>Staff: Username: <b>Staff</b> / Password: <b>lohosstaff@</b></p>
+            <p>To create test users, use the Supabase dashboard.</p>
+            <p className="mt-2">Username will be converted to email format:</p>
+            <p className="italic">username@lohos.edu</p>
           </div>
         </div>
       </div>

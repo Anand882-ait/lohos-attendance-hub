@@ -9,7 +9,154 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      attendance: {
+        Row: {
+          date: string
+          id: string
+          marked_at: string | null
+          marked_by: string
+          reason: string | null
+          status: string
+          student_id: string
+        }
+        Insert: {
+          date: string
+          id?: string
+          marked_at?: string | null
+          marked_by: string
+          reason?: string | null
+          status: string
+          student_id: string
+        }
+        Update: {
+          date?: string
+          id?: string
+          marked_at?: string | null
+          marked_by?: string
+          reason?: string | null
+          status?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: string
+          updated_at: string | null
+          username: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id: string
+          role: string
+          updated_at?: string | null
+          username?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: string
+          updated_at?: string | null
+          username?: string | null
+        }
+        Relationships: []
+      }
+      rooms: {
+        Row: {
+          capacity: number | null
+          created_at: string | null
+          floor: string | null
+          id: string
+          occupied_count: number | null
+          room_number: string
+          updated_at: string | null
+        }
+        Insert: {
+          capacity?: number | null
+          created_at?: string | null
+          floor?: string | null
+          id?: string
+          occupied_count?: number | null
+          room_number: string
+          updated_at?: string | null
+        }
+        Update: {
+          capacity?: number | null
+          created_at?: string | null
+          floor?: string | null
+          id?: string
+          occupied_count?: number | null
+          room_number?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      students: {
+        Row: {
+          batch: string
+          created_at: string | null
+          department: string
+          father_name: string
+          father_phone: string
+          id: string
+          mother_name: string
+          mother_phone: string
+          name: string
+          photo: string | null
+          room_id: string | null
+          student_phone: string
+          updated_at: string | null
+        }
+        Insert: {
+          batch: string
+          created_at?: string | null
+          department: string
+          father_name: string
+          father_phone: string
+          id?: string
+          mother_name: string
+          mother_phone: string
+          name: string
+          photo?: string | null
+          room_id?: string | null
+          student_phone: string
+          updated_at?: string | null
+        }
+        Update: {
+          batch?: string
+          created_at?: string | null
+          department?: string
+          father_name?: string
+          father_phone?: string
+          id?: string
+          mother_name?: string
+          mother_phone?: string
+          name?: string
+          photo?: string | null
+          room_id?: string | null
+          student_phone?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "students_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
