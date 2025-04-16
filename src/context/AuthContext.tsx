@@ -91,8 +91,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         navigate("/dashboard");
       }
     } catch (err: any) {
-      setError(err.message || "Login failed. Please check your credentials.");
-      toast.error(err.message || "Login failed");
+      console.error("Login error:", err.message);
+      setError("Invalid login credentials. Please try again.");
+      toast.error("Invalid login credentials");
     } finally {
       setIsLoading(false);
     }
